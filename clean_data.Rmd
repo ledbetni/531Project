@@ -1,0 +1,249 @@
+
+---
+title: "Lab03: Data Cleaning with R"
+author: "Pineapple Seaowls"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    theme: cosmo
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+```{r loadpackages}
+library(tidyverse)
+library(arrow)
+```
+
+```{r}
+# Your code here
+library(tidyverse)
+library(arrow)
+bids_raw <- read_parquet("../data/bids_data_vDTR.parquet")
+bids <- read_parquet("../data/bids_data_vDTR.parquet")
+glimpse(bids_raw)
+```
+
+```{r}
+library(dplyr)
+class(bids$PRICE)
+summary(bids$PRICE)
+set.seed(123)
+sample(bids$PRICE, size=20)
+head(bids$PRICE)
+
+```
+
+```{r}
+library(readr)
+library(dplyr)
+bids <- bids %>% mutate(PRICE_clean = parse_number(PRICE))
+summary(bids$PRICE_clean)
+class(bids$PRICE_clean)
+```
+
+```{r}
+sum(is.na(bids$PRICE_clean))
+
+```
+
+```{r}
+summary(bids$PRICE_clean)
+quantile(bids$PRICE_clean, probs = seq(0,1,0.01), na.rm=TRUE)
+bids%>%filter(!is.na(PRICE_clean), PRICE_clean < 0) %>% head(20)
+p99 <- quantile(bids$PRICE_clean, 0.99, na.rm=TRUE)
+bids%>%filter(!is.na(PRICE_clean), PRICE_clean > p99) %>% head(20)
+```
+
+```{r}
+library(dplyr)
+p99 <- quantile(bids$PRICE_clean, 0.99, na.rm=TRUE)
+bids <- bids %>% mutate(PRICE_final = case_when(PRICE_clean %in% c(-999, -99) ~ NA_real_, PRICE_clean < 0 ~NA_real_, PRICE_clean > p99 ~ p99, TRUE ~ PRICE_clean))
+
+summary(bids$PRICE_final)
+
+```
+
+```{r}
+library(dplyr)
+library(stringr)
+bids%>%count(DEVICE_GEO_REGION, sort=TRUE)
+
+```
+
+```{r}
+library(dplyr)
+library(stringr)
+bids%>%count(DEVICE_GEO_REGION, sort=TRUE)
+
+
+```
+
+```{r}
+bids<-bids%>% mutate(DEVICE_GEO_REGION_clean = case_when(str_detect(DEVICE_GEO_REGION, "OR") ~ "OR", str_detect(DEVICE_GEO_REGION, "Or") ~ "OR", str_detect(DEVICE_GEO_REGION, "oregon") ~ "OR", str_detect(DEVICE_GEO_REGION, "xor") ~ "OR", TRUE ~ NA_character_))
+
+bids %>% count(DEVICE_GEO_REGION_clean, sort=TRUE)
+
+```
+
+```{r}
+bids<-bids%>% mutate(DEVICE_GEO_ZIP_char = as.character(DEVICE_GEO_ZIP))
+
+bids%>%count(DEVICE_GEO_ZIP_char, sort=TRUE) %>% head(30)
+
+```
+
+```{r}
+bids%>% mutate(ZIP_trim = str_trim(DEVICE_GEO_ZIP_char), ZIP_len=str_length(ZIP_trim), ZIP_digits=str_detect(ZIP_trim, "^[0-9]+$"))%>%summarise(min_len=min(ZIP_len, na.rm=TRUE), max_len=max(ZIP_len,na.rm=TRUE), non_digit_count=sum(!ZIP_digits,na.rm=TRUE))
+
+bids%>%filter(DEVICE_GEO_ZIP_char %in% c("-999", "9999", "00000", "99999"))%>% count(DEVICE_GEO_ZIP_char)
+
+```
+
+```{r}
+bids<- bids%>%mutate(ZIP_trim=DEVICE_GEO_ZIP_char %>% as.character() %>% str_trim(), DEVICE_GEO_ZIP_clean = case_when(str_detect(ZIP_trim, "^97[0-9]{3}$") ~ ZIP_trim, TRUE ~ NA_character_))
+
+bids%>% count(DEVICE_GEO_ZIP_clean, sort=TRUE) %>% head(20)
+
+```
+
+```{r}
+bids<- bids%>%mutate(ZIP_trim=DEVICE_GEO_ZIP_char %>% as.character() %>% str_trim(), DEVICE_GEO_ZIP_clean = case_when(str_detect(ZIP_trim, "^97[0-9]{3}$") ~ ZIP_trim, TRUE ~ NA_character_))
+
+bids%>% count(DEVICE_GEO_ZIP_clean, sort=TRUE) %>% head(20)
+
+```
+
+```{r}
+set.seed(123)
+sample(bids$RESPONSE_TIME, size=20)
+
+```
+
+```{r}
+bids <- bids%>% mutate(RESPONSE_TIME_char = as.character(RESPONSE_TIME), RESPONSE_TIME_trim = str_trim(RESPONSE_TIME_char), RESPONSE_TIME_strip = str_replace(RESPONSE_TIME_trim, "^[^0-9.-]*", ""), RESPONSE_TIME_str=str_replace(RESPONSE_TIME_strip, "[^0-9.-]+$", ""), RESPONSE_TIME_clean = as.numeric(RESPONSE_TIME_str))
+
+summary(bids$RESPONSE_TIME_clean)
+
+```
+
+```{r}
+na_response <- sum(is.na(bids$RESPONSE_TIME_clean))
+na_response
+
+
+```
+
+```{r}
+library(dplyr)
+library(stringr)
+library(lubridate)
+
+set.seed(123)
+sample(bids$TIMESTAMP,size=20)
+
+```
+
+```{r}
+bids<-bids%>%mutate(TIMESTAMP_char = as.character(TIMESTAMP))
+
+bids%>%summarise(num_dash=sum(str_detect(TIMESTAMP_char, "-"), na.rm=TRUE), num_slash=sum(str_detect(TIMESTAMP_char, "/"), na.rm=TRUE))
+
+```
+
+```{r}
+bids<-bids%>% mutate(TIMESTAMP_clean = parse_date_time(TIMESTAMP_char, orders = c("ymd HMS", "ymd HM", "mdy HMS", "mdy HM"), tz="UTC"))
+
+```
+
+```{r}
+sum(is.na(bids$TIMESTAMP_clean))
+
+
+```
+
+```{r}
+summary(bids$TIMESTAMP_clean)
+range(bids$TIMESTAMP_clean, na.rm = TRUE)
+
+```
+
+```{r}
+bids %>% count(AUCTION_ID) %>% filter(n>1)
+
+```
+
+```{r}
+bids_dup <- bids %>% count(across(everything()), name="n") %>% filter(n>1)
+nrow(bids_dup)
+sum(bids_dup$n - 1)
+bids_dup %>% head()
+
+```
+
+```{r}
+bids_nodup<- bids %>% distinct()
+nrow(bids)
+nrow(bids_nodup)
+bids_nodup %>% count(across(everything()), name="n") %>% filter(n>1)
+```
+
+```{r}
+bids %>% summarise(min_lat = min(DEVICE_GEO_LAT, na.rm=TRUE), max_lat = max(DEVICE_GEO_LAT, na.rm=TRUE), min_long = min(DEVICE_GEO_LONG, na.rm=TRUE), max_long = max(DEVICE_GEO_LONG, na.rm=TRUE))
+
+## Lat looks roughly valid, long valid ranges from (-124 to -116)
+
+```
+
+```{r}
+lat_min <- 42
+lat_max <- 47
+long_min <- -125
+long_max <- -116
+
+```
+
+```{r}
+bids %>% filter(DEVICE_GEO_LONG < long_min) %>% select(DEVICE_GEO_LAT,DEVICE_GEO_LONG) %>%arrange(DEVICE_GEO_LONG)
+
+```
+
+```{r}
+lat_min <- 42
+lat_max <- 47
+long_min <- -125
+long_max <- -116
+
+bids<- bids%>% mutate( DEVICE_GEO_LAT_clean = if_else(!is.na(DEVICE_GEO_LAT) & DEVICE_GEO_LAT >= lat_min & DEVICE_GEO_LAT <= lat_max, DEVICE_GEO_LAT,NA_real_), DEVICE_GEO_LONG_clean = if_else(!is.na(DEVICE_GEO_LONG) & DEVICE_GEO_LONG >= long_min & DEVICE_GEO_LONG <= long_max, DEVICE_GEO_LONG, NA_real_))
+
+bids %>% summarise(min_lat_clean = min(DEVICE_GEO_LAT_clean, na.rm=TRUE), max_lat_clean = max(DEVICE_GEO_LAT_clean, na.rm=TRUE), min_long_clean = min(DEVICE_GEO_LONG_clean, na.rm=TRUE), max_long_clean = max(DEVICE_GEO_LONG_clean, na.rm=TRUE))
+
+```
+
+```{r}
+bids_clean<- bids %>% select(AUCTION_ID, TIMESTAMP_clean, DATE_UTC, PUBLISHER_ID, DEVICE_TYPE, DEVICE_GEO_CITY, DEVICE_GEO_REGION_clean, DEVICE_GEO_ZIP_clean, DEVICE_GEO_LAT_clean, DEVICE_GEO_LONG_clean, PRICE_final, REQUESTED_SIZES, SIZE, RESPONSE_TIME_clean,BID_WON)
+
+glimpse(bids_clean)
+
+bids %>%count(across(everything()), name = "n") %>%filter(n > 1)
+
+bids_final <- bids_clean%>% distinct()
+glimpse(bids_final)
+
+```
+
+```{r}
+glimpse(bids_final)
+
+```
+
+
+

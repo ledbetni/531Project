@@ -1,0 +1,82 @@
+---
+title: "Final Presentation Template"
+format: revealjs
+---
+
+# Title Slide
+
+-   Project title
+-   Team members
+-   GitHub repository link
+
+# Guiding Questions
+
+-   Brief data description
+  -
+-   Key guiding questions
+-   Why they matter
+
+# Workflow & Roles
+
+-   Team task division
+-   Jira / Kanban usage
+-   GitHub workflow (branches, PRs)
+
+# Data Issues Identified
+
+-   Missingness
+-   Typos & formatting issues
+-   Type mismatches
+-   Duplicates
+-   Outliers
+
+# Cleaning Decisions
+
+## Issue type 1
+
+-   Problem
+-   Why problem matters
+-   Fix summary
+
+## Issue type 2
+
+-   Same structure...
+
+# Reproducibility
+
+-   Folder structure
+-   RMarkdown/Quarto workflow
+-   Commit history evidence
+
+# EDA Overview
+
+-   High-level distributions
+-   Relationships
+-   Missingness summaries
+
+# Deep Dive: Guiding Question 1
+
+-   Plot(s)
+-   Interpretation
+
+# Deep Dive: Guiding Question 2
+
+-   Plot(s)
+-   Interpretation
+
+# Key Findings
+
+-   3–5 insights
+
+# Reflection
+
+-   Teamwork lessons
+-   Tools
+-   Challenges
+
+# Limitations & Future Work
+
+# Final Summary
+
+-   Main takeaways
+-   Link to repo
