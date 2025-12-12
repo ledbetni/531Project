@@ -184,7 +184,13 @@ ggplot(bids_final, aes(x = PRICE_final)) +
   geom_histogram(binwidth = .1, fill = "steelblue", alpha = 0.7) +
   theme_minimal() + labs(title = "Distribution of Bid Prices", x = "Price", y = "Count") + theme(plot.title = element_text(size=16, face="bold", hjust=0.5))
 
-
+Interpretation: 
+- strongly right-skewed
+- data was cut off at 99th percentile because we have extreme outliers (histogram that includes outliers is terribly uninformative)
+- shape suggests high variance in willingness to pay across bidders/auctions 
+- most bids at low prices, small fraction of bidders willing to pay more
+- Highest bidder wins vast majority of the time, meaning auction mechanism is behaving correctly most of the time
+- The small percentage of situations where the highest bid doesn’t win are likely due to non-price constraints.
 
 bids_per_auction <- bids %>%
   count(AUCTION_ID, name = "num_bids")
@@ -196,10 +202,27 @@ ggplot(bids_per_auction, aes(x = num_bids)) +
   geom_histogram(binwidth = 1, fill = "steelblue", alpha = 0.7) +
   theme_minimal() + labs(title = "Distribution of Bids per Auction", x = "Number of Bids", y = "Count of Auctions") + theme(plot.title = element_text(size=16, face="bold", hjust=0.5))
 
+Interpretation:
+- Heavily right skewed
+- Largest spike at 1-2 bids per auction, steep drop-off after 3-4 bids per auction
+- Small number of auctions receive high number of bids
+    - High demand ad slots
+    - These auctions likely produce high CPMs
+
+
 #Repsonse time
 ggplot(bids_final, aes(x = RESPONSE_TIME_clean)) +
   geom_histogram(binwidth = 30, fill = "steelblue", alpha = 0.7) +
   theme_minimal() + labs(title = "Distribution of Response Times", x = "Reponse Time in MS", y = "Count") + theme(plot.title = element_text(size=16, face="bold", hjust=0.5))
+
+Interpretation:
+- Heavily right-skewed
+- Most common response time is between 100 and 150 milliseconds
+- We do see moderate tail from 250-600 milliseconds
+- This suggests that bidders within this response range have non-optimal infrastructure
+- Bulk of data is at relatively low response time, we can assume that faster response times help win likelihood
+
+
 
 #Price per zip
 ggplot(bids_final, aes(x = PRICE_final)) + geom_histogram(bins = 30, fill = "steelblue", alpha = 0.7) +
@@ -243,6 +266,13 @@ ggplot(portland_map) +
     fill = "Avg Price"
   ) +
   theme_minimal()
+
+Interpretation:
+- High variance in CPM across ZIP Codes
+- Areas with “Premium ZIPs” - high median CPM, relatively high competition
+- Reasons: Affluent demographics, urban areas, areas w/ strong advertiser demand
+- Areas with “Low-Value ZIPs” - rural areas, areas w/ low-density traffic
+
 
 #### Does highest bid win?
 
